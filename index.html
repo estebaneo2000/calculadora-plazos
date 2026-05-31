@@ -14,7 +14,7 @@
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
        background:var(--bg);color:var(--tinta);line-height:1.5;}
-  .wrap{max-width:820px;margin:0 auto;padding:24px 18px 60px;}
+  .wrap{max-width:840px;margin:0 auto;padding:24px 18px 60px;}
   header{text-align:center;margin-bottom:22px;}
   header h1{margin:0;font-size:1.7rem;color:var(--verde);}
   header p{margin:6px 0 0;color:var(--gris);font-size:.92rem;}
@@ -22,14 +22,17 @@
         padding:22px;box-shadow:0 1px 3px rgba(0,0,0,.05);margin-bottom:18px;}
   label{display:block;font-weight:600;font-size:.9rem;margin:14px 0 5px;}
   .hint{font-weight:400;color:var(--gris);font-size:.82rem;}
-  select,input[type=date]{width:100%;padding:10px 12px;border:1px solid #cdd6d0;
+  select,input[type=date],input[type=number]{width:100%;padding:10px 12px;border:1px solid #cdd6d0;
         border-radius:9px;font-size:1rem;background:#fff;color:var(--tinta);font-family:inherit;}
   .row{display:flex;gap:14px;flex-wrap:wrap;}
   .row>div{flex:1;min-width:200px;}
   .cond{display:none;}
-  button{margin-top:20px;width:100%;background:var(--verde);color:#fff;border:0;
+  .modo{display:flex;gap:0;margin-bottom:4px;border:1px solid var(--verde-borde);border-radius:10px;overflow:hidden}
+  .modo button{margin:0;border:0;flex:1;background:#fff;color:var(--gris);font-weight:600;font-size:.92rem;padding:11px;cursor:pointer;width:auto}
+  .modo button.on{background:var(--verde);color:#fff}
+  button.calc{margin-top:20px;width:100%;background:var(--verde);color:#fff;border:0;
         padding:13px;font-size:1.05rem;font-weight:600;border-radius:10px;cursor:pointer;}
-  button:hover{background:#27583f;}
+  button.calc:hover{background:#27583f;}
   #out{display:none;}
   .venc{background:var(--verde-claro);border:1px solid var(--verde-borde);border-radius:12px;
         padding:18px;text-align:center;margin-bottom:16px;}
@@ -50,14 +53,13 @@
   .fund{font-size:.82rem;color:var(--gris);margin-top:2px;}
   details.adv{margin-top:16px;border-top:1px dashed #d6e0d9;padding-top:6px;}
   details.adv summary{cursor:pointer;font-weight:600;font-size:.9rem;color:var(--verde);padding:6px 0;}
-  /* mini-calendario */
   .calwrap{margin-top:10px;}
   .leyenda{display:flex;gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--gris);margin:4px 0 12px;align-items:center}
   .leyenda span{display:inline-flex;align-items:center;gap:5px}
   .sw{width:13px;height:13px;border-radius:3px;display:inline-block;border:1px solid #ccc}
   .toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px}
   .toolbar .clr{background:none;border:1px solid #cdd6d0;color:var(--gris);width:auto;margin:0;
-        padding:5px 10px;font-size:.8rem;border-radius:7px;font-weight:600}
+        padding:5px 10px;font-size:.8rem;border-radius:7px;font-weight:600;cursor:pointer}
   .meses{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:12px}
   .mes{border:1px solid #e3e9e4;border-radius:8px;padding:8px}
   .mesnom{text-align:center;font-weight:600;font-size:.82rem;color:var(--verde);text-transform:capitalize;margin-bottom:4px}
@@ -76,36 +78,83 @@
 <div class="wrap">
   <header>
     <h1>🌿 Calculadora de Plazos</h1>
-    <p>Materia fiscal · administrativa · amparo &nbsp;|&nbsp; ámbito federal &nbsp;|&nbsp; calendario: <b>2026</b></p>
+    <p>Federal · Estatal (Yucatán) · Municipal (Mérida) · Amparo &nbsp;|&nbsp; calendario: <b>2026</b></p>
   </header>
 
   <div class="card">
-    <label for="tramite">Tipo de trámite</label>
-    <select id="tramite" onchange="toggle()">
-      <option value="revocacion">Recurso de revocación (fiscal — CFF)</option>
-      <option value="revision">Recurso de revisión (administrativo — LFPA)</option>
-      <option value="nulidad">Juicio de nulidad (TFJA — LFPCA)</option>
-      <option value="amparo">Amparo directo (vs. sentencia del TFJA)</option>
-    </select>
-    <div class="fund" id="fund"></div>
+    <label>Tipo de plazo</label>
+    <div class="modo">
+      <button id="btnInicio" class="on" onclick="setModo('inicio')">Inicio de un medio de defensa</button>
+      <button id="btnIntra" onclick="setModo('intra')">Plazo intraprocesal</button>
+    </div>
+
+    <!-- INICIO -->
+    <div id="bloqueInicio">
+      <label for="tramite">Tipo de trámite</label>
+      <select id="tramite" onchange="toggle()">
+        <optgroup label="🇲🇽 Federal">
+          <option value="revocacion">Recurso de revocación (fiscal — CFF)</option>
+          <option value="revision">Recurso de revisión (administrativo — LFPA)</option>
+          <option value="nulidad">Juicio de nulidad (TFJA — LFPCA)</option>
+          <option value="amparo">Amparo directo (vs. sentencia del TFJA)</option>
+        </optgroup>
+        <optgroup label="🏛️ Estatal — Yucatán">
+          <option value="revocacion_edo">Recurso de revocación (fiscal — Cód. Fiscal del Edo.)</option>
+          <option value="revision_edo">Recurso de revisión (administrativo — LAPAEY)</option>
+          <option value="nulidad_edo">Juicio de nulidad (TJAEY — LCAEY)</option>
+          <option value="amparo_edo">Amparo directo (vs. sentencia del TJAEY)</option>
+        </optgroup>
+        <optgroup label="🏙️ Municipal — Mérida">
+          <option value="reconsideracion_mpal">Recurso de reconsideración (LGMEY)</option>
+          <option value="revision_mpal">Recurso de revisión (Trib. Contencioso Municipal)</option>
+          <option value="amparo_mpal">Amparo directo (vs. Trib. Contencioso Municipal)</option>
+        </optgroup>
+      </select>
+      <div class="fund" id="fund"></div>
+    </div>
+
+    <!-- INTRAPROCESAL -->
+    <div id="bloqueIntra" style="display:none">
+      <label for="foro">Foro / etapa donde corre el plazo</label>
+      <select id="foro" onchange="toggleForo()">
+        <optgroup label="Juicios">
+          <option value="tfja">Juicio contencioso federal — TFJA</option>
+          <option value="tjaey">Juicio contencioso estatal — TJAEY</option>
+          <option value="tcamm">Trib. Contencioso Municipal — Mérida</option>
+        </optgroup>
+        <optgroup label="Sede administrativa (recursos / procedimiento)">
+          <option value="cff">Fiscal federal — CFF</option>
+          <option value="lfpa">Administrativo federal — LFPA</option>
+          <option value="cfey">Fiscal estatal — Cód. Fiscal del Edo.</option>
+          <option value="lapaey">Administrativo estatal — LAPAEY</option>
+          <option value="mpal">Municipal — RAPAMM (Mérida)</option>
+        </optgroup>
+        <optgroup label="Amparo">
+          <option value="amparo">Juicio de amparo — PJF</option>
+        </optgroup>
+      </select>
+      <div class="fund" id="fundForo"></div>
+      <label for="dias">Número de días que otorgó el tribunal/autoridad <span class="hint">(lo indica el acuerdo)</span></label>
+      <input type="number" id="dias" min="1" value="15">
+    </div>
 
     <div class="row">
       <div>
-        <label for="fecha">Fecha de notificación <span class="hint">(o de publicación en Boletín)</span></label>
+        <label for="fecha">Fecha de notificación <span class="hint">(o de publicación en lista/Boletín)</span></label>
         <input type="date" id="fecha" value="2026-05-14">
       </div>
       <div class="cond" id="boxMateria">
         <label for="materia">Materia del acto impugnado</label>
         <select id="materia">
-          <option value="fiscal">Fiscal → surte al día hábil siguiente (CFF 135)</option>
-          <option value="administrativo">Administrativo → surte el mismo día (LFPA 38)</option>
+          <option value="fiscal">Fiscal → surte al día hábil siguiente</option>
+          <option value="administrativo">Administrativo → surte el mismo día</option>
         </select>
       </div>
       <div class="cond" id="boxForma">
-        <label for="forma">Forma de notificación de la sentencia</label>
+        <label for="forma">Forma de notificación</label>
         <select id="forma">
-          <option value="boletin">Boletín Jurisdiccional → 3er día hábil (LFPCA 65)</option>
-          <option value="personal">Personal → día hábil siguiente (LFPCA 65)</option>
+          <option value="boletin">Boletín / lista → 3er día hábil</option>
+          <option value="personal">Personal → día hábil siguiente</option>
         </select>
       </div>
     </div>
@@ -114,7 +163,7 @@
       <summary>📅 Calendario de días inhábiles (precargados + agrega los tuyos)</summary>
       <div class="calwrap">
         <div class="leyenda">
-          <span><i class="sw" style="background:var(--rojo)"></i> Inhábil precargado (ley/acuerdo)</span>
+          <span><i class="sw" style="background:var(--rojo)"></i> Inhábil precargado</span>
           <span><i class="sw" style="background:var(--naranja)"></i> Inhábil que agregaste</span>
           <span><i class="sw" style="background:#f4f6f4"></i> Fin de semana</span>
           <span><i class="sw" style="background:#fff"></i> Hábil (clic para marcar)</span>
@@ -127,16 +176,16 @@
       </div>
     </details>
 
-    <button onclick="calcular()">Calcular vencimiento</button>
+    <button class="calc" onclick="calcular()">Calcular vencimiento</button>
   </div>
 
   <div class="card" id="out"></div>
 
   <footer>
     <b>Herramienta de apoyo — no sustituye el criterio profesional.</b><br>
-    Verifica siempre contra el texto vigente de la ley y el calendario oficial del órgano que corresponda.
-    Precargados <b>2026</b>: TFJA (Acuerdo SS/2/2026), festivos de ley, y días inhábiles del SAT confirmados en la RMF regla 2.1.6 (1-2 ene y 2-3 abr).
-    El SAT <b>aún no publica su periodo de verano 2026</b>; márcalo en el calendario cuando salga. Las suspensiones de cada dependencia (recurso de revisión) también se marcan ahí. Los calendarios se actualizan cada año.
+    Verifica siempre contra el texto vigente de la ley y el calendario oficial del órgano que corresponda. Precargados <b>2026</b>:
+    <b>TFJA</b>, <b>TJAEY</b>, <b>Trib. Contencioso de Mérida</b> y <b>PJF</b> (acuerdo OAJ); festivos de ley federal/estatal/municipal; SAT (RMF 2.1.6).
+    Las vacaciones de autoridades fiscales y suspensiones de dependencias no precargadas se marcan en el calendario. Los calendarios se actualizan cada año.
     <br>🌿 Hecho con Vero.
   </footer>
 </div>
@@ -151,90 +200,114 @@ function iso(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate
 function rango(y,m,d1,d2){const a=[];for(let d=d1;d<=d2;d++)a.push(`${y}-${pad(m)}-${pad(d)}`);return a;}
 function fmt(d){return `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`;}
 
-// Calendarios de días inhábiles 2026 (además de sábados y domingos)
+// ───── Calendarios de días inhábiles 2026 (además de sábados y domingos) ─────
 const CAL={
-  // TFJA — Acuerdo SS/2/2026
-  TFJA:new Set(['2026-02-02','2026-03-16','2026-04-01','2026-04-02','2026-04-03',
-    '2026-05-01','2026-05-04','2026-05-05','2026-07-13','2026-07-14',...rango(2026,7,15,31),
-    '2026-08-28','2026-09-14','2026-09-15','2026-09-16','2026-10-12','2026-11-02','2026-11-16',
-    '2026-12-14',...rango(2026,12,15,31)]),
-  // CFF art. 12 (festivos de ley) + SAT confirmados RMF 2.1.6 (1-2 ene cola 2º periodo, 2-3 abr)
-  CFF:new Set(['2026-01-01','2026-01-02','2026-02-02','2026-03-16','2026-04-02','2026-04-03',
-    '2026-05-01','2026-05-05','2026-09-16','2026-11-16','2026-12-25']),
-  // LFPA art. 28 (festivos de ley; suspensiones de la dependencia se marcan a mano)
+  TFJA:new Set(['2026-02-02','2026-03-16','2026-04-01','2026-04-02','2026-04-03','2026-05-01','2026-05-04','2026-05-05',
+    '2026-07-13','2026-07-14',...rango(2026,7,15,31),'2026-08-28','2026-09-14','2026-09-15','2026-09-16','2026-10-12',
+    '2026-11-02','2026-11-16','2026-12-14',...rango(2026,12,15,31)]),
+  CFF:new Set(['2026-01-01','2026-01-02','2026-02-02','2026-03-16','2026-04-02','2026-04-03','2026-05-01','2026-05-05','2026-09-16','2026-11-16','2026-12-25']),
   LFPA:new Set(['2026-01-01','2026-02-05','2026-03-21','2026-05-01','2026-05-05','2026-09-16','2026-11-20','2026-12-25']),
+  TJAEY:new Set(['2026-01-01','2026-02-02','2026-02-16','2026-02-17','2026-03-16','2026-04-02','2026-04-03',
+    '2026-05-01','2026-05-04','2026-05-05','2026-07-16',...rango(2026,7,17,31),'2026-09-16','2026-11-01','2026-11-02',
+    '2026-11-16','2026-12-16',...rango(2026,12,17,31),'2026-12-25']),
+  FISC_YUC:new Set(['2026-01-01','2026-02-02','2026-03-16','2026-05-01','2026-05-05','2026-09-16','2026-11-16','2026-12-25']),
+  ADM_YUC:new Set(['2026-01-01','2026-02-02','2026-02-17','2026-03-16','2026-05-01','2026-09-16','2026-11-16','2026-12-25']),
+  TCAMM:new Set(['2026-01-01','2026-01-02','2026-01-05','2026-01-06','2026-01-07','2026-01-16','2026-02-02','2026-02-16','2026-02-17',
+    '2026-03-16','2026-04-01','2026-04-02','2026-04-03','2026-05-01','2026-05-05',...rango(2026,7,16,31),'2026-09-16',
+    '2026-11-01','2026-11-02','2026-11-16',...rango(2026,12,16,31)]),
+  // PJF — acuerdo OAJ 2026 (incluye "inhábiles pero laborables": 5 feb y 20 nov — el tribunal labora pero NO corren términos)
+  PJF:new Set(['2026-01-01','2026-02-02','2026-02-05','2026-03-16','2026-04-01','2026-04-02','2026-04-03','2026-05-01','2026-05-04','2026-05-05',
+    ...rango(2026,7,16,31),'2026-09-14','2026-09-15','2026-09-16','2026-10-12','2026-11-02','2026-11-16','2026-11-20',...rango(2026,12,16,31)]),
 };
+const CALNOM={TFJA:'TFJA (SS/2/2026)',CFF:'CFF / SAT (art. 12 + RMF 2.1.6)',LFPA:'LFPA / dependencia (art. 28)',
+  TJAEY:'TJAEY (Ac. V/12-11-2025)',FISC_YUC:'Cód. Fiscal del Edo. (art. 15)',ADM_YUC:'LAPAEY/RAPAMM (festivos)',
+  TCAMM:'Trib. Contencioso Mpal. de Mérida',PJF:'PJF (acuerdo OAJ 2026)'};
 
 const TRAMITES={
-  revocacion:{nombre:'Recurso de revocación (fiscal)',plazo:30,cal:'CFF',surt:'siguiente',
-    fund:'CFF arts. 121 (plazo), 135 (surtimiento) y 12 (cómputo)',calNom:'CFF / SAT (art. 12 + RMF 2.1.6)'},
-  revision:{nombre:'Recurso de revisión (administrativo)',plazo:15,cal:'LFPA',surt:'mismo',
-    fund:'LFPA arts. 85 (plazo), 38 (surtimiento) y 28 (cómputo)',calNom:'LFPA / dependencia (art. 28)'},
-  nulidad:{nombre:'Juicio de nulidad (TFJA, vía tradicional)',plazo:30,cal:'TFJA',surt:'segunActo',
-    fund:'LFPCA arts. 13 (plazo) y 74 (cómputo); surtimiento según ley del acto (CFF 135 / LFPA 38)',calNom:'TFJA (SS/2/2026)'},
-  amparo:{nombre:'Amparo directo (vs. sentencia del TFJA)',plazo:15,cal:'TFJA',surt:'boletin',
-    fund:'L. Amparo arts. 17 (plazo), 18 (cómputo) y 19 (inhábiles); surtimiento LFPCA 65',calNom:'TFJA (SS/2/2026)'},
+  revocacion:{nombre:'Recurso de revocación (fiscal, federal)',plazo:30,cal:'CFF',surt:'siguiente',fund:'CFF arts. 121, 135 y 12',calNom:'CFF / SAT (art. 12 + RMF 2.1.6)'},
+  revision:{nombre:'Recurso de revisión (admin., federal)',plazo:15,cal:'LFPA',surt:'mismo',fund:'LFPA arts. 85, 38 y 28',calNom:'LFPA / dependencia (art. 28)'},
+  nulidad:{nombre:'Juicio de nulidad (TFJA)',plazo:30,cal:'TFJA',surt:'segunActo',fund:'LFPCA arts. 13 y 74; surtimiento según ley del acto (CFF 135 / LFPA 38)',calNom:'TFJA (SS/2/2026)'},
+  amparo:{nombre:'Amparo directo (vs. TFJA)',plazo:15,cal:'TFJA',surt:'boletin',fund:'L. Amparo 17-19; surtimiento LFPCA 65',calNom:'TFJA (SS/2/2026)'},
+  revocacion_edo:{nombre:'Recurso de revocación (fiscal, Yucatán)',plazo:30,cal:'FISC_YUC',surt:'siguiente',fund:'CFEY arts. 141, 157 y 15',calNom:'Cód. Fiscal del Edo. (art. 15)'},
+  revision_edo:{nombre:'Recurso de revisión (admin., Yucatán)',plazo:15,cal:'ADM_YUC',surt:'mismo',fund:'LAPAEY arts. 128, 68 y 55',calNom:'LAPAEY (art. 55)'},
+  nulidad_edo:{nombre:'Juicio de nulidad (TJAEY)',plazo:15,cal:'TJAEY',surt:'segunActo',fund:'LCAEY art. 12; surtimiento según ley del acto (CFEY 157 / LAPAEY 68)',calNom:'TJAEY (Ac. V/12-11-2025)'},
+  amparo_edo:{nombre:'Amparo directo (vs. TJAEY)',plazo:15,cal:'TJAEY',surt:'siguiente',fund:'L. Amparo 17-18; surtimiento LCAEY 71',calNom:'TJAEY (Ac. V/12-11-2025)'},
+  reconsideracion_mpal:{nombre:'Recurso de reconsideración (Mérida)',plazo:10,cal:'ADM_YUC',surt:'mismo',fund:'LGMEY art. 179; surtimiento y cómputo por RAPAMM (51 y 38), que rige también el procedimiento fiscal mpal. (art. 1)',calNom:'Dependencia mpal. (RAPAMM art. 38)'},
+  revision_mpal:{nombre:'Recurso de revisión (Trib. Contencioso Mpal.)',plazo:15,cal:'TCAMM',surt:'mismo',fund:'RCAMM art. 13; LGMEY 177; el acto impugnado surte el mismo día (RAPAMM 51)',calNom:'Trib. Contencioso Mpal. de Mérida'},
+  amparo_mpal:{nombre:'Amparo directo (vs. Trib. Contencioso Mpal.)',plazo:15,cal:'TCAMM',surt:'siguiente',fund:'L. Amparo 17-18; cómputo RCAMM 88; surtimiento al día hábil siguiente',calNom:'Trib. Contencioso Mpal. de Mérida'},
 };
 
-// inhábiles adicionales marcados por el usuario, por trámite/calendario
-const manual={CFF:new Set(),LFPA:new Set(),TFJA:new Set()};
+// FOROS para plazos intraprocesales (el surtimiento lo manda la ley PROCESAL del foro)
+const FOROS={
+  tfja:{nombre:'Juicio contencioso federal (TFJA)',cal:'TFJA',surt:'boletin',fund:'LFPCA art. 65 (Boletín → 3er día hábil; personal → día hábil siguiente)'},
+  tjaey:{nombre:'Juicio contencioso estatal (TJAEY)',cal:'TJAEY',surt:'siguiente',fund:'LCAEY art. 71 (día hábil siguiente)'},
+  tcamm:{nombre:'Trib. Contencioso Mpal. de Mérida',cal:'TCAMM',surt:'siguiente',fund:'RCAMM art. 88 (día hábil siguiente)'},
+  cff:{nombre:'Recurso/proc. fiscal federal (CFF)',cal:'CFF',surt:'siguiente',fund:'CFF art. 135 (día hábil siguiente)'},
+  lfpa:{nombre:'Recurso/proc. admin. federal (LFPA)',cal:'LFPA',surt:'mismo',fund:'LFPA art. 38 (el mismo día)'},
+  cfey:{nombre:'Recurso/proc. fiscal estatal (CFEY)',cal:'FISC_YUC',surt:'siguiente',fund:'CFEY art. 157 (día hábil siguiente)'},
+  lapaey:{nombre:'Recurso/proc. admin. estatal (LAPAEY)',cal:'ADM_YUC',surt:'mismo',fund:'LAPAEY art. 68 (el mismo día)'},
+  mpal:{nombre:'Proc./recurso municipal (Mérida)',cal:'ADM_YUC',surt:'mismo',fund:'RAPAMM art. 51 (el mismo día)'},
+  amparo:{nombre:'Juicio de amparo (PJF)',cal:'PJF',surt:'siguiente',fund:'L. Amparo 31-II (día siguiente, por lista/personal) y 18; inhábiles art. 19 + acuerdo OAJ'},
+};
 
-function calKey(){return TRAMITES[document.getElementById('tramite').value].cal;}
+const manual={}; Object.keys(CAL).forEach(k=>manual[k]=new Set());
+let MODO='inicio';
 
-function toggle(){
-  const t=document.getElementById('tramite').value;
-  document.getElementById('boxMateria').style.display = t==='nulidad'?'block':'none';
-  document.getElementById('boxForma').style.display   = t==='amparo'?'block':'none';
-  document.getElementById('fund').textContent='Fundamento: '+TRAMITES[t].fund;
+function calKey(){ return MODO==='inicio' ? TRAMITES[document.getElementById('tramite').value].cal : FOROS[document.getElementById('foro').value].cal; }
+
+function setModo(m){
+  MODO=m;
+  document.getElementById('btnInicio').classList.toggle('on',m==='inicio');
+  document.getElementById('btnIntra').classList.toggle('on',m==='intra');
+  document.getElementById('bloqueInicio').style.display = m==='inicio'?'block':'none';
+  document.getElementById('bloqueIntra').style.display = m==='intra'?'block':'none';
+  if(m==='inicio') toggle(); else toggleForo();
+}
+
+function toggle(){ // INICIO
+  const TR=TRAMITES[document.getElementById('tramite').value];
+  document.getElementById('boxMateria').style.display = (TR.surt==='segunActo')?'block':'none';
+  document.getElementById('boxForma').style.display   = (TR.surt==='boletin')?'block':'none';
+  document.getElementById('fund').textContent='Fundamento: '+TR.fund;
+  renderCal();
+}
+function toggleForo(){ // INTRAPROCESAL
+  const FO=FOROS[document.getElementById('foro').value];
+  document.getElementById('boxMateria').style.display='none';
+  document.getElementById('boxForma').style.display = (FO.surt==='boletin')?'block':'none';
+  document.getElementById('fundForo').textContent='Fundamento: '+FO.fund;
   renderCal();
 }
 
 function renderCal(){
   const cal=CAL[calKey()]; const man=manual[calKey()];
-  document.getElementById('calInfo').textContent='Calendario: '+TRAMITES[document.getElementById('tramite').value].calNom;
+  document.getElementById('calInfo').textContent='Calendario: '+CALNOM[calKey()];
   let html='';
   for(let m=0;m<12;m++){
     html+=`<div class="mes"><div class="mesnom">${MESES[m]}</div><div class="grid7">`;
     html+=DOW.map(x=>`<div class="dow">${x}</div>`).join('');
-    const offset=(new Date(2026,m,1).getDay()+6)%7; // lunes=0
+    const offset=(new Date(2026,m,1).getDay()+6)%7;
     for(let i=0;i<offset;i++) html+='<div class="d empty"></div>';
     const dim=new Date(2026,m+1,0).getDate();
     for(let day=1;day<=dim;day++){
-      const k=`2026-${pad(m+1)}-${pad(day)}`;
-      const wd=new Date(2026,m,day).getDay();
+      const k=`2026-${pad(m+1)}-${pad(day)}`; const wd=new Date(2026,m,day).getDay();
       let cls='d';
-      if(wd===0||wd===6) cls+=' finde';
-      else if(cal.has(k)) cls+=' pre';
-      else if(man.has(k)) cls+=' man';
-      else cls+=' habil';
+      if(wd===0||wd===6) cls+=' finde'; else if(cal.has(k)) cls+=' pre'; else if(man.has(k)) cls+=' man'; else cls+=' habil';
       html+=`<div class="${cls}" onclick="toggleDia('${k}')">${day}</div>`;
     }
     html+='</div></div>';
   }
   document.getElementById('cal').innerHTML=html;
 }
-
 function toggleDia(k){
-  const [y,m,dd]=k.split('-').map(Number);
-  const wd=new Date(y,m-1,dd).getDay();
-  const cal=CAL[calKey()];
-  if(wd===0||wd===6||cal.has(k)) return; // no se togglean findes ni precargados
-  const man=manual[calKey()];
-  if(man.has(k)) man.delete(k); else man.add(k);
-  renderCal();
+  const [y,m,dd]=k.split('-').map(Number); const wd=new Date(y,m-1,dd).getDay(); const cal=CAL[calKey()];
+  if(wd===0||wd===6||cal.has(k)) return;
+  const man=manual[calKey()]; if(man.has(k)) man.delete(k); else man.add(k); renderCal();
 }
-
 function limpiar(){ manual[calKey()].clear(); renderCal(); }
 
-function esInhabil(d,cal,man){
-  const wd=d.getDay(); if(wd===0||wd===6) return true;
-  const k=iso(d); return cal.has(k)||man.has(k);
-}
-function addHabiles(start,n,cal,man){
-  const d=new Date(start); let c=0;
-  while(c<n){ d.setDate(d.getDate()+1); if(!esInhabil(d,cal,man)) c++; }
-  return d;
-}
+function esInhabil(d,cal,man){ const wd=d.getDay(); if(wd===0||wd===6) return true; const k=iso(d); return cal.has(k)||man.has(k); }
+function addHabiles(start,n,cal,man){ const d=new Date(start); let c=0; while(c<n){ d.setDate(d.getDate()+1); if(!esInhabil(d,cal,man)) c++; } return d; }
 function inhabilesEspeciales(surt,venc,cal,man){
   const out=[]; const d=new Date(surt);
   while(d<venc){ d.setDate(d.getDate()+1); const wd=d.getDay(); const k=iso(d);
@@ -243,40 +316,49 @@ function inhabilesEspeciales(surt,venc,cal,man){
 }
 
 function calcular(){
-  const t=document.getElementById('tramite').value;
-  const tram=TRAMITES[t];
-  const cal=CAL[tram.cal]; const man=manual[tram.cal];
-  const fv=document.getElementById('fecha').value;
   const out=document.getElementById('out');
+  const fv=document.getElementById('fecha').value;
   if(!fv){ out.style.display='block'; out.innerHTML='<div class="warn">Captura la fecha de notificación.</div>'; return; }
-  const [y,m,dd]=fv.split('-').map(Number);
-  const notif=new Date(y,m-1,dd);
+  const [y,m,dd]=fv.split('-').map(Number); const notif=new Date(y,m-1,dd);
 
-  // 1) surtimiento de efectos
+  let nombre,fund,plazo,surtTipo,calK,calNom;
+  if(MODO==='inicio'){
+    const tr=TRAMITES[document.getElementById('tramite').value];
+    nombre=tr.nombre;fund=tr.fund;plazo=tr.plazo;surtTipo=tr.surt;calK=tr.cal;calNom=tr.calNom;
+  } else {
+    const fo=FOROS[document.getElementById('foro').value];
+    plazo=parseInt(document.getElementById('dias').value,10)||0;
+    if(plazo<=0){ out.style.display='block'; out.innerHTML='<div class="warn">Captura el número de días del plazo (lo indica el acuerdo).</div>'; return; }
+    nombre='Plazo intraprocesal · '+fo.nombre; fund=fo.fund; surtTipo=fo.surt; calK=fo.cal; calNom=CALNOM[calK];
+  }
+  const cal=CAL[calK], man=manual[calK];
+
   let regla, surt;
-  if(tram.surt==='mismo'){ regla='el mismo día en que se practicó (LFPA art. 38)'; surt=new Date(notif); }
-  else if(tram.surt==='siguiente'){ regla='el día hábil siguiente (CFF art. 135)'; surt=addHabiles(notif,1,cal,man); }
-  else if(tram.surt==='segunActo'){
-    if(document.getElementById('materia').value==='fiscal'){ regla='el día hábil siguiente — acto fiscal (CFF art. 135)'; surt=addHabiles(notif,1,cal,man); }
-    else { regla='el mismo día — acto administrativo (LFPA art. 38)'; surt=new Date(notif); }
+  if(surtTipo==='mismo'){ regla='el mismo día en que se practicó la notificación'; surt=new Date(notif); }
+  else if(surtTipo==='siguiente'){ regla='el día hábil siguiente a la notificación'; surt=addHabiles(notif,1,cal,man); }
+  else if(surtTipo==='segunActo'){
+    if(document.getElementById('materia').value==='fiscal'){ regla='el día hábil siguiente (materia fiscal)'; surt=addHabiles(notif,1,cal,man); }
+    else { regla='el mismo día (materia administrativa)'; surt=new Date(notif); }
   } else { // boletin
-    if(document.getElementById('forma').value==='boletin'){ regla='al 3er día hábil tras la publicación en el Boletín (LFPCA art. 65)'; surt=addHabiles(notif,3,cal,man); }
-    else { regla='el día hábil siguiente — notificación personal (LFPCA art. 65)'; surt=addHabiles(notif,1,cal,man); }
+    if(document.getElementById('forma').value==='boletin'){ regla='al 3er día hábil tras la publicación en Boletín/lista'; surt=addHabiles(notif,3,cal,man); }
+    else { regla='el día hábil siguiente — notificación personal'; surt=addHabiles(notif,1,cal,man); }
   }
 
   const dia1=addHabiles(surt,1,cal,man);
-  const venc=addHabiles(surt,tram.plazo,cal,man);
+  const venc=addHabiles(surt,plazo,cal,man);
   const esp=inhabilesEspeciales(surt,venc,cal,man);
 
   let avisos='';
   if(y!==2026 || venc.getFullYear()!==2026)
     avisos+='<div class="warn">⚠️ El calendario precargado cubre solo <b>2026</b>. Para fechas fuera de ese año, verifica los días inhábiles.</div>';
-  if(tram.surt==='mismo' && esInhabil(notif,cal,man))
-    avisos+='<div class="warn">⚠️ La fecha de notificación cae en día inhábil; revísala (las notificaciones personales se practican en días hábiles).</div>';
-  if(tram.cal==='CFF')
-    avisos+='<div class="nota">📌 El SAT aún no publica su <b>periodo de verano 2026</b>. Si tu plazo lo cruza, márcalo en el calendario de inhábiles.</div>';
-  if(tram.cal==='LFPA')
-    avisos+='<div class="nota">📌 Si la dependencia tuvo <b>suspensiones</b> propias, márcalas en el calendario de inhábiles.</div>';
+  if(surtTipo==='mismo' && esInhabil(notif,cal,man))
+    avisos+='<div class="warn">⚠️ La fecha de notificación cae en día inhábil; revísala.</div>';
+  if(calK==='CFF'||calK==='FISC_YUC')
+    avisos+='<div class="nota">📌 Las <b>vacaciones de la autoridad fiscal</b> no están precargadas; si tu plazo las cruza, márcalas en el calendario.</div>';
+  if(calK==='LFPA'||calK==='ADM_YUC')
+    avisos+='<div class="nota">📌 Las <b>suspensiones de la dependencia</b> no están precargadas; márcalas en el calendario si aplican.</div>';
+  if(calK==='PJF')
+    avisos+='<div class="nota">📌 PJF: incluidos los <b>"inhábiles pero laborables"</b> (p. ej. 5 feb, 20 nov: el tribunal labora pero NO corren términos). Verifica suspensiones extraordinarias del CJF/OAJ.</div>';
 
   const espHtml = esp.length
     ? esp.map(o=>`<span class="pill">${DIAS[o.d.getDay()]} ${o.d.getDate()}/${pad(o.d.getMonth()+1)}${o.add?' (+)':''}</span>`).join('')
@@ -289,19 +371,20 @@ function calcular(){
       <div class="fecha">${fmt(venc)}</div>
     </div>
     <table class="desglose">
-      <tr><td>Trámite</td><td>${tram.nombre}</td></tr>
+      <tr><td>${MODO==='inicio'?'Trámite':'Plazo'}</td><td>${nombre}</td></tr>
+      <tr><td>Fundamento</td><td style="font-weight:400;text-transform:none">${fund}</td></tr>
       <tr><td>Notificación</td><td>${fmt(notif)}</td></tr>
       <tr><td>Surte efectos</td><td>${fmt(surt)}<div class="fund" style="text-transform:none">${regla}</div></td></tr>
       <tr><td>Inicia el cómputo (día 1)</td><td>${fmt(dia1)}</td></tr>
-      <tr><td>Plazo</td><td>${tram.plazo} días hábiles</td></tr>
-      <tr><td>Calendario de inhábiles</td><td style="text-transform:none">${tram.calNom}</td></tr>
+      <tr><td>Plazo</td><td>${plazo} días hábiles</td></tr>
+      <tr><td>Calendario de inhábiles</td><td style="text-transform:none">${calNom}</td></tr>
       <tr><td>Inhábiles en el periodo <span class="hint">(+) = agregado</span></td><td style="font-weight:400;text-transform:none">${espHtml}</td></tr>
     </table>
     ${avisos}
   `;
 }
 
-toggle();
+setModo('inicio');
 </script>
 </body>
 </html>
