@@ -203,6 +203,7 @@ function fmt(d){return `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth
 // ───── Calendarios de días inhábiles 2026 (además de sábados y domingos) ─────
 const CAL={
   TFJA:new Set(['2026-02-02','2026-03-16','2026-04-01','2026-04-02','2026-04-03','2026-05-01','2026-05-04','2026-05-05',
+    '2026-05-20','2026-06-02', // Suspensiones Sala Regional en Yucatán: SRYUC/01/2026 (falla CFE) y SRYUC/02/2026 (lluvias)
     '2026-07-13','2026-07-14',...rango(2026,7,15,31),'2026-08-28','2026-09-14','2026-09-15','2026-09-16','2026-10-12',
     '2026-11-02','2026-11-16','2026-12-14',...rango(2026,12,15,31)]),
   CFF:new Set(['2026-01-01','2026-01-02','2026-02-02','2026-03-16','2026-04-02','2026-04-03','2026-05-01','2026-05-05','2026-09-16','2026-11-16','2026-12-25']),
@@ -226,11 +227,11 @@ const CALNOM={TFJA:'TFJA (SS/2/2026)',CFF:'CFF / SAT (art. 12 + RMF 2.1.6)',LFPA
 const TRAMITES={
   revocacion:{nombre:'Recurso de revocación (fiscal, federal)',plazo:30,cal:'CFF',surt:'siguiente',fund:'CFF arts. 121, 135 y 12',calNom:'CFF / SAT (art. 12 + RMF 2.1.6)'},
   revision:{nombre:'Recurso de revisión (admin., federal)',plazo:15,cal:'LFPA',surt:'mismo',fund:'LFPA arts. 85, 38 y 28',calNom:'LFPA / dependencia (art. 28)'},
-  nulidad:{nombre:'Juicio de nulidad (TFJA)',plazo:30,cal:'TFJA',surt:'segunActo',fund:'LFPCA arts. 13 y 74; surtimiento según ley del acto (CFF 135 / LFPA 38)',calNom:'TFJA (SS/2/2026)'},
+  nulidad:{nombre:'Juicio de nulidad (TFJA)',plazo:30,cal:'TFJA',surt:'segunActo',surtCal:{fiscal:'CFF'},fund:'LFPCA arts. 13 y 74; surtimiento según ley del acto (CFF 135 / LFPA 38)',calNom:'TFJA (SS/2/2026)'},
   amparo:{nombre:'Amparo directo (vs. TFJA)',plazo:15,cal:'TFJA',surt:'boletin',fund:'L. Amparo 17-19; surtimiento LFPCA 65',calNom:'TFJA (SS/2/2026)'},
   revocacion_edo:{nombre:'Recurso de revocación (fiscal, Yucatán)',plazo:30,cal:'FISC_YUC',surt:'siguiente',fund:'CFEY arts. 141, 157 y 15',calNom:'Cód. Fiscal del Edo. (art. 15)'},
   revision_edo:{nombre:'Recurso de revisión (admin., Yucatán)',plazo:15,cal:'ADM_YUC',surt:'mismo',fund:'LAPAEY arts. 128, 68 y 55',calNom:'LAPAEY (art. 55)'},
-  nulidad_edo:{nombre:'Juicio de nulidad (TJAEY)',plazo:15,cal:'TJAEY',surt:'segunActo',fund:'LCAEY art. 12; surtimiento según ley del acto (CFEY 157 / LAPAEY 68)',calNom:'TJAEY (Ac. V/12-11-2025)'},
+  nulidad_edo:{nombre:'Juicio de nulidad (TJAEY)',plazo:15,cal:'TJAEY',surt:'segunActo',surtCal:{fiscal:'FISC_YUC'},fund:'LCAEY art. 12; surtimiento según ley del acto (CFEY 157 / LAPAEY 68)',calNom:'TJAEY (Ac. V/12-11-2025)'},
   amparo_edo:{nombre:'Amparo directo (vs. TJAEY)',plazo:15,cal:'TJAEY',surt:'siguiente',fund:'L. Amparo 17-18; surtimiento LCAEY 71',calNom:'TJAEY (Ac. V/12-11-2025)'},
   reconsideracion_mpal:{nombre:'Recurso de reconsideración (Mérida)',plazo:10,cal:'ADM_YUC',surt:'mismo',fund:'LGMEY art. 179; surtimiento y cómputo por RAPAMM (51 y 38), que rige también el procedimiento fiscal mpal. (art. 1)',calNom:'Dependencia mpal. (RAPAMM art. 38)'},
   revision_mpal:{nombre:'Recurso de revisión (Trib. Contencioso Mpal.)',plazo:15,cal:'TCAMM',surt:'mismo',fund:'RCAMM art. 13; LGMEY 177; el acto impugnado surte el mismo día (RAPAMM 51)',calNom:'Trib. Contencioso Mpal. de Mérida'},
@@ -321,37 +322,46 @@ function calcular(){
   if(!fv){ out.style.display='block'; out.innerHTML='<div class="warn">Captura la fecha de notificación.</div>'; return; }
   const [y,m,dd]=fv.split('-').map(Number); const notif=new Date(y,m-1,dd);
 
-  let nombre,fund,plazo,surtTipo,calK,calNom;
+  let nombre,fund,plazo,surtTipo,calK,calNom,surtCalFiscal=null;
   if(MODO==='inicio'){
     const tr=TRAMITES[document.getElementById('tramite').value];
     nombre=tr.nombre;fund=tr.fund;plazo=tr.plazo;surtTipo=tr.surt;calK=tr.cal;calNom=tr.calNom;
+    surtCalFiscal = tr.surtCal && tr.surtCal.fiscal ? tr.surtCal.fiscal : null;
   } else {
     const fo=FOROS[document.getElementById('foro').value];
     plazo=parseInt(document.getElementById('dias').value,10)||0;
     if(plazo<=0){ out.style.display='block'; out.innerHTML='<div class="warn">Captura el número de días del plazo (lo indica el acuerdo).</div>'; return; }
     nombre='Plazo intraprocesal · '+fo.nombre; fund=fo.fund; surtTipo=fo.surt; calK=fo.cal; calNom=CALNOM[calK];
   }
-  const cal=CAL[calK], man=manual[calK];
+  // Cómputo del PLAZO: calendario del tribunal/foro
+  const calPlazo=CAL[calK], manPlazo=manual[calK];
+  // Surtimiento: por defecto el mismo calendario, PERO en el juicio de nulidad de un acto
+  // FISCAL el surtimiento se rige por la ley del acto (CFF / Cód. Fiscal Edo.), no por el del tribunal.
+  let surtCalK=calK, surtCal=calPlazo, surtMan=manPlazo;
 
   let regla, surt;
   if(surtTipo==='mismo'){ regla='el mismo día en que se practicó la notificación'; surt=new Date(notif); }
-  else if(surtTipo==='siguiente'){ regla='el día hábil siguiente a la notificación'; surt=addHabiles(notif,1,cal,man); }
+  else if(surtTipo==='siguiente'){ regla='el día hábil siguiente a la notificación'; surt=addHabiles(notif,1,surtCal,surtMan); }
   else if(surtTipo==='segunActo'){
-    if(document.getElementById('materia').value==='fiscal'){ regla='el día hábil siguiente (materia fiscal)'; surt=addHabiles(notif,1,cal,man); }
-    else { regla='el mismo día (materia administrativa)'; surt=new Date(notif); }
+    if(document.getElementById('materia').value==='fiscal'){
+      if(surtCalFiscal){ surtCalK=surtCalFiscal; surtCal=CAL[surtCalK]; surtMan=manual[surtCalK]; }
+      regla='el día hábil siguiente — materia fiscal, según '+CALNOM[surtCalK];
+      surt=addHabiles(notif,1,surtCal,surtMan);
+    } else { regla='el mismo día (materia administrativa)'; surt=new Date(notif); }
   } else { // boletin
-    if(document.getElementById('forma').value==='boletin'){ regla='al 3er día hábil tras la publicación en Boletín/lista'; surt=addHabiles(notif,3,cal,man); }
-    else { regla='el día hábil siguiente — notificación personal'; surt=addHabiles(notif,1,cal,man); }
+    if(document.getElementById('forma').value==='boletin'){ regla='al 3er día hábil tras la publicación en Boletín/lista'; surt=addHabiles(notif,3,surtCal,surtMan); }
+    else { regla='el día hábil siguiente — notificación personal'; surt=addHabiles(notif,1,surtCal,surtMan); }
   }
 
-  const dia1=addHabiles(surt,1,cal,man);
-  const venc=addHabiles(surt,plazo,cal,man);
-  const esp=inhabilesEspeciales(surt,venc,cal,man);
+  // El plazo corre con el calendario del tribunal/foro, aunque el surtimiento se rija por otro.
+  const dia1=addHabiles(surt,1,calPlazo,manPlazo);
+  const venc=addHabiles(surt,plazo,calPlazo,manPlazo);
+  const esp=inhabilesEspeciales(surt,venc,calPlazo,manPlazo);
 
   let avisos='';
   if(y!==2026 || venc.getFullYear()!==2026)
     avisos+='<div class="warn">⚠️ El calendario precargado cubre solo <b>2026</b>. Para fechas fuera de ese año, verifica los días inhábiles.</div>';
-  if(surtTipo==='mismo' && esInhabil(notif,cal,man))
+  if(surtTipo==='mismo' && esInhabil(notif,calPlazo,manPlazo))
     avisos+='<div class="warn">⚠️ La fecha de notificación cae en día inhábil; revísala.</div>';
   if(calK==='CFF'||calK==='FISC_YUC')
     avisos+='<div class="nota">📌 Las <b>vacaciones de la autoridad fiscal</b> no están precargadas; si tu plazo las cruza, márcalas en el calendario.</div>';
@@ -377,7 +387,7 @@ function calcular(){
       <tr><td>Surte efectos</td><td>${fmt(surt)}<div class="fund" style="text-transform:none">${regla}</div></td></tr>
       <tr><td>Inicia el cómputo (día 1)</td><td>${fmt(dia1)}</td></tr>
       <tr><td>Plazo</td><td>${plazo} días hábiles</td></tr>
-      <tr><td>Calendario de inhábiles</td><td style="text-transform:none">${calNom}</td></tr>
+      <tr><td>Calendario de inhábiles</td><td style="text-transform:none">${surtCalK!==calK ? 'Surtimiento: <b>'+CALNOM[surtCalK]+'</b> · Cómputo del plazo: <b>'+calNom+'</b>' : calNom}</td></tr>
       <tr><td>Inhábiles en el periodo <span class="hint">(+) = agregado</span></td><td style="font-weight:400;text-transform:none">${espHtml}</td></tr>
     </table>
     ${avisos}
