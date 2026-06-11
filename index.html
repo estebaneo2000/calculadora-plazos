@@ -370,6 +370,23 @@ function calcular(){
   if(calK==='PJF')
     avisos+='<div class="nota">📌 PJF: incluidos los <b>"inhábiles pero laborables"</b> (p. ej. 5 feb, 20 nov: el tribunal labora pero NO corren términos). Verifica suspensiones extraordinarias del CJF/OAJ.</div>';
 
+  // ── Reforma LFPCA (DOF 9-jun-2026): el art. 65 baja el surtimiento del Boletín de 3 a 2 días.
+  //    Figura en el TERCERO TRANSITORIO (plazos máximos) → vigencia diferida a 240 días naturales
+  //    de la publicación (≈ 4-feb-2027). Hasta entonces rige 3 días. Mostramos AMBOS escenarios.
+  //    NOTA: al entrar en vigor, cambiar la regla 'boletin' principal a addHabiles(notif,2,...).
+  if(surtTipo==='boletin' && document.getElementById('forma').value==='boletin'){
+    const surt2=addHabiles(notif,2,surtCal,surtMan);
+    const dia1b=addHabiles(surt2,1,calPlazo,manPlazo);
+    const venc2=addHabiles(surt2,plazo,calPlazo,manPlazo);
+    avisos+=`<div class="nota">⚠️ <b>Reforma LFPCA (DOF 9 jun 2026), art. 65 — Boletín Jurisdiccional.</b> Reduce el surtimiento del Boletín de <b>3 a 2 días hábiles</b>. El art. 65 figura en el <b>Tercero Transitorio</b> (plazos máximos), por lo que su vigencia se difiere a los <b>240 días naturales</b> de la publicación (≈ <b>4 de febrero de 2027</b>; confírmese el día exacto). <b>Hasta esa fecha rige el cómputo a 3 días</b> que se muestra arriba. Como existe duda sobre si el surtimiento es "plazo máximo", se incluye el escenario reformado:
+      <table class="desglose" style="margin-top:8px;margin-bottom:2px">
+        <tr><td>Surte (2.º día hábil)</td><td>${fmt(surt2)}</td></tr>
+        <tr><td>Inicia cómputo (día 1)</td><td>${fmt(dia1b)}</td></tr>
+        <tr><td>Vencimiento (regla reformada)</td><td>${fmt(venc2)}</td></tr>
+      </table>
+      Si hay duda, presenta en el vencimiento <b>más temprano</b> de los dos.</div>`;
+  }
+
   const espHtml = esp.length
     ? esp.map(o=>`<span class="pill">${DIAS[o.d.getDay()]} ${o.d.getDate()}/${pad(o.d.getMonth()+1)}${o.add?' (+)':''}</span>`).join('')
     : '<span class="hint">— solo sábados y domingos —</span>';
